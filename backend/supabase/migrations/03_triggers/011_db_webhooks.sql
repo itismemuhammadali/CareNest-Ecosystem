@@ -16,8 +16,8 @@ DECLARE
   _svc_key text;
   _payload jsonb;
 BEGIN
-  _url     := 'https://kfavdpqaaxzauovzrcas.supabase.co/functions/v1/send_push';
-  _secret  := '48e9967077f9b02eb4fd6c13b07241a64795b698545e6708f8d5bdbc17a40614';
+  _url     := current_setting('app.settings.supabase_url', true) || '/functions/v1/send_push';
+  _secret  := current_setting('app.settings.webhook_secret', true);
   _svc_key := current_setting('app.settings.service_role_key', true);
 
   _payload := jsonb_build_object(
@@ -58,8 +58,8 @@ DECLARE
   _secret  text;
   _payload jsonb;
 BEGIN
-  _url    := 'https://kfavdpqaaxzauovzrcas.supabase.co/functions/v1/send_guardian_consent_email';
-  _secret := '48e9967077f9b02eb4fd6c13b07241a64795b698545e6708f8d5bdbc17a40614';
+  _url    := current_setting('app.settings.supabase_url', true) || '/functions/v1/send_guardian_consent_email';
+  _secret := current_setting('app.settings.webhook_secret', true);
 
   _payload := jsonb_build_object(
     'type',       TG_OP,

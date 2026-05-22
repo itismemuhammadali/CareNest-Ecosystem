@@ -1,9 +1,8 @@
-# Environment Variables (allowed in private repo)
-# .env files are now tracked since this is a private repository
-# .env
-# .env.local
-# .env.*.local
-# .env.production.local
+# Environment Variables
+.env
+.env.local
+.env.*.local
+.env.production.local
 
 # IDE & Editor
 .vscode/

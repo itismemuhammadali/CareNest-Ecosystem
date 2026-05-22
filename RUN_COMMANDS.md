@@ -2,12 +2,12 @@
 
 ## Environment Setup
 ```bash
-# Supabase credentials (production)
-SUPABASE_URL=https://kfavdpqaaxzauovzrcas.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYXZkcHFhYXh6YXVvdnpyY2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNzM5NzYsImV4cCI6MjA5Mzk0OTk3Nn0.rRe4Fc6_SBxGVQgZ9qez4umnb0x10LwV9_YY4E4NjnA
+# Supabase credentials (production) — see .env.example
+SUPABASE_URL=<your-supabase-url>
+SUPABASE_ANON_KEY=<your-anon-key>
 
 # Admin Bootstrap Code
-BOOTSTRAP_CODE=STARSITTERS_ADMIN_2026
+BOOTSTRAP_CODE=<your-admin-bootstrap-code>
 ```
 
 ---
@@ -38,19 +38,19 @@ supabase db push --linked
 
 ### Run on Emulator
 ```bash
-cd /Users/muhammadali3000/development/Star_Sitter/apps/mobile/sitter
-/Users/muhammadali3000/development/flutter/bin/flutter run \
-  --dart-define=SUPABASE_URL=https://kfavdpqaaxzauovzrcas.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYXZkcHFhYXh6YXVvdnpyY2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNzM5NzYsImV4cCI6MjA5Mzk0OTk3Nn0.rRe4Fc6_SBxGVQgZ9qez4umnb0x10LwV9_YY4E4NjnA
+cd apps/mobile/sitter
+flutter run \
+  --dart-define=SUPABASE_URL=$SUPABASE_URL \
+  --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
 ```
 
 ### Run on Connected Device (Wireless)
 ```bash
-cd /Users/muhammadali3000/development/Star_Sitter/apps/mobile/sitter
-/Users/muhammadali3000/development/flutter/bin/flutter run \
-  -d adb-RS5DJZL7DMV4FMD6-5EVCzz._adb-tls-connect._tcp \
-  --dart-define=SUPABASE_URL=https://kfavdpqaaxzauovzrcas.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYXZkcHFhYXh6YXVvdnpyY2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNzM5NzYsImV4cCI6MjA5Mzk0OTk3Nn0.rRe4Fc6_SBxGVQgZ9qez4umnb0x10LwV9_YY4E4NjnA
+cd apps/mobile/sitter
+flutter run \
+  -d <your-device-id> \
+  --dart-define=SUPABASE_URL=$SUPABASE_URL \
+  --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
 ```
 
 ### Hot Reload (while running)
@@ -65,19 +65,19 @@ Press `R` in the terminal
 
 ### Run on Emulator
 ```bash
-cd /Users/muhammadali3000/development/Star_Sitter/apps/mobile/family
-/Users/muhammadali3000/development/flutter/bin/flutter run \
-  --dart-define=SUPABASE_URL=https://kfavdpqaaxzauovzrcas.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYXZkcHFhYXh6YXVvdnpyY2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNzM5NzYsImV4cCI6MjA5Mzk0OTk3Nn0.rRe4Fc6_SBxGVQgZ9qez4umnb0x10LwV9_YY4E4NjnA
+cd apps/mobile/family
+flutter run \
+  --dart-define=SUPABASE_URL=$SUPABASE_URL \
+  --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
 ```
 
 ### Run on Connected Device (Wireless)
 ```bash
-cd /Users/muhammadali3000/development/Star_Sitter/apps/mobile/family
-/Users/muhammadali3000/development/flutter/bin/flutter run \
-  -d adb-RS5DJZL7DMV4FMD6-5EVCzz._adb-tls-connect._tcp \
-  --dart-define=SUPABASE_URL=https://kfavdpqaaxzauovzrcas.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYXZkcHFhYXh6YXVvdnpyY2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNzM5NzYsImV4cCI6MjA5Mzk0OTk3Nn0.rRe4Fc6_SBxGVQgZ9qez4umnb0x10LwV9_YY4E4NjnA
+cd apps/mobile/family
+flutter run \
+  -d <your-device-id> \
+  --dart-define=SUPABASE_URL=$SUPABASE_URL \
+  --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
 ```
 
 ---
@@ -93,7 +93,7 @@ npm run dev
 Admin portal runs on: `http://localhost:3000`
 
 ### Signup Code
-Use bootstrap code: `STARSITTERS_ADMIN_2026`
+Use bootstrap code from your `.env` file (`BOOTSTRAP_CODE` variable)
 
 ---
 

@@ -61,7 +61,7 @@ enable_confirmations = false
 # ── OAuth Providers ────────────────────────────────────────────────────────
 # Set credentials in Supabase Dashboard → Auth → Providers, or via:
 #   supabase secrets set GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=...
-# Then run: supabase config push --project-ref kfavdpqaaxzauovzrcas --yes
+# Then run: supabase config push --project-ref <your-project-ref> --yes
 
 [auth.external.google]
 enabled = true

@@ -16,7 +16,7 @@ DECLARE
   _secret  text;
   _payload jsonb;
 BEGIN
-  _url    := 'https://kfavdpqaaxzauovzrcas.supabase.co/functions/v1/send_push';
+  _url    := current_setting('app.settings.supabase_url', true) || '/functions/v1/send_push';
   _secret := public.cfg_text('webhook_secret', '');
 
   IF _secret = '' OR _secret = 'ROTATE_ME' THEN
@@ -55,7 +55,7 @@ DECLARE
   _secret  text;
   _payload jsonb;
 BEGIN
-  _url    := 'https://kfavdpqaaxzauovzrcas.supabase.co/functions/v1/send_guardian_consent_email';
+  _url    := current_setting('app.settings.supabase_url', true) || '/functions/v1/send_guardian_consent_email';
   _secret := public.cfg_text('webhook_secret', '');
 
   IF _secret = '' OR _secret = 'ROTATE_ME' THEN
@@ -83,8 +83,5 @@ BEGIN
 END;
 $$;
 
--- Update the webhook_secret to the actual secret value (was ROTATE_ME placeholder).
-UPDATE public.system_config
-SET value = '"48e9967077f9b02eb4fd6c13b07241a64795b698545e6708f8d5bdbc17a40614"'
-WHERE key = 'webhook_secret'
-  AND value = '"ROTATE_ME"';
+-- After applying this migration, update webhook_secret in system_config:
+--   UPDATE public.system_config SET value = '"<your-new-webhook-secret>"' WHERE key = 'webhook_secret';
