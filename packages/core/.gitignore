@@ -1,0 +1,18 @@
+# Dart/Flutter build artifacts
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+*.g.dart
+*.freezed.dart
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Coverage
+coverage/
+
+# pubspec lock (packages are resolved by consumers)
+# pubspec.lock  # keep for reproducible CI if desired

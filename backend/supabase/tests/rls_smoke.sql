@@ -1,0 +1,25 @@
+-- RLS / policy smoke reference (BACKEND.md §18 Day 5).
+-- Run fragments in SQL Editor while impersonating roles, or from psql with a real JWT.
+--
+-- === Invariants (document in QA; automated pgTAP optional later) ===
+--
+-- 1) Sitter INSERT certifications
+--    - Must be: sitter_id = auth.uid(), status = pending, cert_type length >= 2,
+--      and if document_path is set it must start with auth.uid() || '/'
+--    - Prefer RPC: register_certification_document(cert_type, path) after Storage upload.
+--
+-- 2) create_application
+--    - Raises if sitter_profiles.is_active is false (inactive sitter cannot apply).
+--
+-- 3) jobs INSERT (family)
+--    - Policy requires family_bg_check_approved(family_id) on insert.
+--
+-- 4) jobs SELECT (sitter)
+--    - Open jobs: status=open AND family bg check approved (helper family_bg_check_approved).
+--    - Plus migration 20260512120000: sitter may read jobs linked by own applications/hires.
+--
+-- 5) Storage cert-docs
+--    - Object key prefix must match auth.uid() for insert/update/delete (see storage policies).
+--
+-- Placeholder query (always succeeds; replace with role-specific checks):
+select 1 as rls_smoke_ok;

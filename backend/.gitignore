@@ -1,0 +1,90 @@
+# =============================================================================
+# Secrets & local env (never commit real values)
+# =============================================================================
+.env
+.env.from-status
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+# Allow committed templates only:
+!.env.example
+!.env.*.example
+*.pem
+*.p8
+*-service-account*.json
+
+# =============================================================================
+# Supabase CLI
+# =============================================================================
+supabase/.temp/
+supabase/.branches/
+.branches
+.temp
+**/supabase/.env
+**/supabase/.env.local
+!supabase/.env.example
+supabase/.secrets/**
+!supabase/.secrets/.gitkeep
+
+# =============================================================================
+# Dependencies & package managers
+# =============================================================================
+node_modules/
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# =============================================================================
+# Build & caches
+# =============================================================================
+dist/
+build/
+.next/
+out/
+.turbo/
+.cache/
+*.tsbuildinfo
+.parcel-cache/
+coverage/
+.nyc_output/
+
+# =============================================================================
+# OS & editors
+# =============================================================================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# =============================================================================
+# Logs & debug
+# =============================================================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =============================================================================
+# Test / tooling
+# =============================================================================
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.tox/
+venv/
+.venv/
+
+# =============================================================================
+# Misc
+# =============================================================================
+*.local.md

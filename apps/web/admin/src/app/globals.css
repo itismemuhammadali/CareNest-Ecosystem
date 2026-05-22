@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+:root {
+  /* Star Sitters palette — dark navy night sky with light-blue accent */
+  --background: #060818;
+  --foreground: #ffffff;
+  --surface: #0f1530;
+  --surface-2: #131a3a;
+  --primary: #b8e0f0;
+  --primary-strong: #c8e8f5;
+  --secondary: #94a3b8;
+  --muted: #64748b;
+  --border: #1f2a4a;
+}
+
+@theme inline {
+  --color-background-base: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-primary-accent: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-text-secondary: var(--secondary);
+  --color-text-muted: var(--muted);
+  --color-border-subtle: var(--border);
+
+  /* Typography Tokens */
+  --text-heading: 30px;
+  --leading-heading: 36px;
+
+  --text-body: 16px;
+  --leading-body: 24px;
+
+  --text-label: 14px;
+  --leading-label: 20px;
+
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+}
+
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar Utility */
+.custom-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes scraper-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-scraper-spin {
+  animation: scraper-spin 1s linear infinite;
+}

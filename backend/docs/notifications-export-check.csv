@@ -1,0 +1,7 @@
+id,user_id,type,title,body,delivery_status,created_at
+099b0e5d-46c3-430f-93fd-1b1e0d6dfcb4,7506f076-d8d8-43da-a61b-b73972610096,cert_result,Course certification update,Reason: Score below minimum threshold for certification approval.,no_devices,2026-05-11T12:51:13.047304+00:00
+3d44b522-b2b5-421e-aca5-b1b50b7229cd,e3748cf1-9d4b-43d6-9dff-b5ed1adb036b,cert_result,Course certification approved,Your course submission was approved.,no_devices,2026-05-11T12:50:32.00344+00:00
+a133c05d-614f-47df-90b0-7fe6de8d0fe1,e4a10faa-a1ee-4ae2-b3e4-fcb6cac3a208,bg_check_result,Background check rejected,Reason: Background check rejected by admin,no_devices,2026-05-11T12:48:25.233988+00:00
+2109a0db-35ac-4bf6-91eb-29ab51439c19,fe09abd3-fe8e-467c-aad1-d0f440f155eb,bg_check_result,Background check approved,Your background check is approved. You can now post jobs.,no_devices,2026-05-11T12:47:34.926727+00:00
+b0c4b502-6716-4329-8e09-5626492c7b25,b001956f-542a-41d2-85d8-bacf2038bb75,bg_check_result,Background check rejected,Reason: Background check rejected by admin,no_devices,2026-05-10T18:14:10.420231+00:00
+512d08cf-e1fa-4d23-9cda-f85a1035a5a3,1b0daab5-2f6c-4f3f-9ab7-b045b75ddd96,bg_check_result,Background check approved,Your background check is approved. You can now post jobs.,no_devices,2026-05-10T18:13:08.990406+00:00

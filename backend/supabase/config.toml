@@ -1,0 +1,83 @@
+# Star Sitters — local Supabase config (BACKEND.md §4)
+# Replace project_id after `supabase link` or create a project in the dashboard.
+
+project_id = "starsitters-backend"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+[inbucket]
+enabled = true
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[realtime]
+enabled = true
+
+[auth]
+enabled = true
+# Admin Next.js dev server (BACKEND.md — Auth Configuration).
+site_url = "http://127.0.0.1:3000"
+# Include every origin used by resetPasswordForEmail(..., { redirectTo }).
+# Mirror in hosted Supabase → Authentication → URL Configuration → Redirect URLs.
+additional_redirect_urls = [
+  "https://127.0.0.1:3000",
+  "http://localhost:3000",
+  "http://localhost:3000/reset-password",
+  "http://127.0.0.1:3000/reset-password",
+  # Flutter Family app OAuth callback (deep link)
+  "io.supabase.starsitterfamily://login-callback",
+  # Flutter Sitter app OAuth callback (deep link)
+  "io.supabase.starsittersitter://login-callback",
+]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+# Local dev: set false so Flutter + Admin can sign up / sign in without inbox.
+enable_confirmations = false
+
+# ── OAuth Providers ────────────────────────────────────────────────────────
+# Set credentials in Supabase Dashboard → Auth → Providers, or via:
+#   supabase secrets set GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=...
+# Then run: supabase config push --project-ref kfavdpqaaxzauovzrcas --yes
+
+[auth.external.google]
+enabled = true
+# Client ID registered in Google Cloud Console. Secret set via Supabase Dashboard → Auth → Providers → Google.
+client_id = "1005848098854-cl7gf8havl3l1hk05q8benkd6hbfor01.apps.googleusercontent.com"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+
+[auth.external.apple]
+# Apple Sign-In requires: Apple Developer account, Services ID, and .p8 private key.
+# Enable via Supabase Dashboard → Auth → Providers → Apple once credentials are ready.
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.facebook]
+enabled = true
+# App ID from Meta Developer Console (facebook.com/developers). Secret set via Supabase Dashboard → Auth → Providers.
+client_id = "2729346470771121"
+secret = "env(FACEBOOK_APP_SECRET)"

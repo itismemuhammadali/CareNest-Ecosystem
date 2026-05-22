@@ -1,0 +1,76 @@
+# Supabase migrations — CI (BACKEND.md §24, GUARDRAILS.MD §2)
+#
+# ROOT CAUSE OF RED "X" ON main:
+#   The hosted deploy job calls `supabase link` + `supabase db push`. That requires
+#   a valid SUPABASE_ACCESS_TOKEN and SUPABASE_PROJECT_REF. If either is missing,
+#   invalid, or the cloud project is paused, the step fails → GitHub emails you.
+#
+# FIX STRATEGY (software-engineering default: green main, opt-in deploy):
+#   1. Every push runs `migrate-check` — lightweight, always succeeds if repo is sane.
+#   2. `hosted-db-push` runs ONLY when ALL are true:
+#        - Repository variable ENABLE_SUPABASE_DB_PUSH == 'true'
+#        - Secret SUPABASE_ACCESS_TOKEN is non-empty
+#        - Secret SUPABASE_PROJECT_REF is non-empty
+#      Otherwise that job is SKIPPED (skipped jobs do not fail the workflow).
+#   3. Manual run: Actions → supabase-db → Run workflow (same gates apply).
+#
+# Setup when you are ready for hosted push on every qualifying push:
+#   Settings → Secrets and variables → Actions → Secrets:
+#     SUPABASE_ACCESS_TOKEN   (https://supabase.com/dashboard/account/tokens)
+#     SUPABASE_PROJECT_REF    (Project Settings → General → Reference ID)
+#   Settings → Secrets and variables → Actions → Variables:
+#     ENABLE_SUPABASE_DB_PUSH = true
+
+name: supabase-db
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/seed.sql"
+      - ".github/workflows/supabase-db.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-check:
+    name: migration tree sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assert migrations directory and SQL files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d supabase/migrations
+          count="$(find supabase/migrations -maxdepth 1 -name '*.sql' -type f | wc -l)"
+          test "${count// /}" -ge 1
+          echo "OK: ${count// /} migration file(s) present."
+
+      - name: Note on hosted deploy
+        run: |
+          echo "::notice::Hosted db push is optional. Set ENABLE_SUPABASE_DB_PUSH + SUPABASE_* secrets to enable job hosted-db-push."
+
+  hosted-db-push:
+    name: supabase link + db push (hosted)
+    needs: migrate-check
+    if: ${{ vars.ENABLE_SUPABASE_DB_PUSH == 'true' && secrets.SUPABASE_ACCESS_TOKEN != '' && secrets.SUPABASE_PROJECT_REF != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link and push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase db push
