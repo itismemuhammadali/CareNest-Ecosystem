@@ -22,15 +22,20 @@ class ChatScreen extends StatefulWidget {
   final String familyName;
   final String subtitle;
   final String? avatarAsset;
+  final String? avatarUrl;
   /// When set, loads live messages from Supabase (BACKEND.md §17).
   final String? conversationId;
+  /// Job information to display in the header
+  final String jobInfo;
 
   const ChatScreen({
     super.key,
     required this.familyName,
-    this.subtitle = 'Verified Family',
+    this.subtitle = 'Secure Chat',
     this.avatarAsset,
+    this.avatarUrl,
     this.conversationId,
+    this.jobInfo = '',
   });
 
   @override
@@ -155,10 +160,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       CircleAvatar(
                         radius: 26,
                         backgroundColor: const Color(0xFF2A2D3E),
-                        backgroundImage: widget.avatarAsset != null
-                            ? AssetImage(widget.avatarAsset!)
-                            : null,
-                        child: widget.avatarAsset == null
+                        backgroundImage: (widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty)
+                            ? NetworkImage(widget.avatarUrl!)
+                            : (widget.avatarAsset != null
+                                ? AssetImage(widget.avatarAsset!)
+                                : null) as ImageProvider?,
+                        child: (widget.avatarUrl == null || widget.avatarUrl!.isEmpty) && widget.avatarAsset == null
                             ? SvgPicture.asset(
                                 'assets/profile-icon.svg',
                                 width: 26,
@@ -184,7 +191,9 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            widget.subtitle,
+                            widget.jobInfo.isNotEmpty ? widget.jobInfo : widget.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 13,
                               color: Color(0x99A8D8EA),

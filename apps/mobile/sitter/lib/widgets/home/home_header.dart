@@ -66,17 +66,46 @@ class _HomeHeaderState extends State<HomeHeader> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        CircleAvatar(
-          radius: 24,
-          backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
-              ? NetworkImage(_avatarUrl!) as ImageProvider
-              : null,
-          backgroundColor: Colors.white12,
-          child: _avatarUrl == null || _avatarUrl!.isEmpty
-              ? SvgPicture.asset('assets/profile-icon.svg', width: 24, height: 24,
-                  colorFilter: const ColorFilter.mode(Colors.white54, BlendMode.srcIn))
-              : null,
-        ),
+        // Avatar with proper image loading
+        _avatarUrl != null && _avatarUrl!.isNotEmpty
+            ? ClipOval(
+                child: Image.network(
+                  _avatarUrl!,
+                  width: 48,
+                  height: 48,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 48,
+                      height: 48,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white12,
+                      ),
+                      child: SvgPicture.asset(
+                        'assets/profile-icon.svg',
+                        width: 24,
+                        height: 24,
+                        colorFilter: const ColorFilter.mode(Colors.white54, BlendMode.srcIn),
+                      ),
+                    );
+                  },
+                ),
+              )
+            : Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white12,
+                ),
+                child: SvgPicture.asset(
+                  'assets/profile-icon.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(Colors.white54, BlendMode.srcIn),
+                ),
+              ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:star_sitters_core/star_sitters_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/profile/profile_header_card.dart';
 import '../widgets/profile/profile_menu_item.dart';
@@ -28,7 +29,9 @@ class _ProfileTabState extends State<ProfileTab> {
   String? _avatarUrl;
   bool _isAdminVerified = false;
   bool _guardianConsentGiven = false;
-  bool _loadingProfile = false;
+
+  StreamSubscription<List<Map<String, dynamic>>>? _userSub;
+  StreamSubscription<List<Map<String, dynamic>>>? _sitterSub;
 
   static const List<Map<String, dynamic>> _menuItems = [
     {'svgAsset': 'assets/profile-icon.svg', 'label': 'Personal Information'},
@@ -43,32 +46,48 @@ class _ProfileTabState extends State<ProfileTab> {
   @override
   void initState() {
     super.initState();
-    _load();
+    _subscribeProfile();
   }
 
-  Future<void> _load() async {
-    // S13: Guard against concurrent _load() calls (race condition on rapid navigation)
-    if (_loadingProfile) return;
-    _loadingProfile = true;
-    try {
-      final repo = ProfileRepository(Supabase.instance.client);
-      final u = await repo.currentUserRow();
-      Map<String, dynamic>? sp;
-      try {
-        sp = await repo.sitterProfile();
-      } catch (_) {}
-      if (!mounted) return;
+  void _subscribeProfile() {
+    final uid = Supabase.instance.client.auth.currentUser?.id;
+    if (uid == null) return;
+
+    _userSub = Supabase.instance.client
+        .from('users')
+        .stream(primaryKey: ['id'])
+        .eq('id', uid)
+        .listen((rows) {
+      if (!mounted || rows.isEmpty) return;
+      final u = rows.first;
+      final fn = u['full_name']?.toString().trim() ?? '';
       setState(() {
-        _email = u?['email']?.toString() ?? '';
-        final fn = u?['full_name']?.toString().trim() ?? '';
+        _email = u['email']?.toString() ?? '';
         _name = fn.isNotEmpty ? fn : _email;
-        _avatarUrl = u?['avatar_url']?.toString();
-        _isAdminVerified = sp?['is_active'] == true;
-        _guardianConsentGiven = sp?['guardian_consent_status']?.toString() == 'approved';
+        _avatarUrl = u['avatar_url']?.toString();
       });
-    } finally {
-      _loadingProfile = false;
-    }
+    });
+
+    _sitterSub = Supabase.instance.client
+        .from('sitter_profiles')
+        .stream(primaryKey: ['user_id'])
+        .eq('user_id', uid)
+        .listen((rows) {
+      if (!mounted || rows.isEmpty) return;
+      final sp = rows.first;
+      setState(() {
+        _isAdminVerified = sp['is_active'] == true;
+        _guardianConsentGiven =
+            sp['guardian_consent_status']?.toString() == 'approved';
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _userSub?.cancel();
+    _sitterSub?.cancel();
+    super.dispose();
   }
 
   void _showSignOutSheet(BuildContext context) {
@@ -78,7 +97,7 @@ class _ProfileTabState extends State<ProfileTab> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => Padding(
+      builder: (modalContext) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -109,7 +128,13 @@ class _ProfileTabState extends State<ProfileTab> {
             const SizedBox(height: 16),
             GestureDetector(
               onTap: () async {
+                // Close modal using modal context
+                Navigator.pop(modalContext);
+                
+                // Sign out
                 await Supabase.instance.client.auth.signOut();
+                
+                // Navigate using parent context
                 if (!context.mounted) return;
                 Navigator.of(context).pushAndRemoveUntil(
                   CustomPageRoute(builder: (_) => const SignInScreen()),
@@ -135,7 +160,7 @@ class _ProfileTabState extends State<ProfileTab> {
             ),
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: () => Navigator.pop(context),
+              onTap: () => Navigator.pop(modalContext),
               child: Container(
                 width: double.infinity,
                 height: 54,

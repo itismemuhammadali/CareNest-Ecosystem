@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:star_sitters_core/star_sitters_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/job_post_session.dart';
 import '../widgets/primary_button.dart';
 import 'create_account_step3_screen.dart';
 
@@ -42,7 +43,7 @@ class _CreateAccountStep2ScreenState extends State<CreateAccountStep2Screen> {
   final _cityController = TextEditingController();
   final _zipController = TextEditingController();
   final _childrenCountController = TextEditingController();
-  final _childrenAgesController = TextEditingController();
+  List<TextEditingController> _ageControllers = [];
   bool _imagesCached = false;
   bool _saving = false;
 
@@ -55,13 +56,34 @@ class _CreateAccountStep2ScreenState extends State<CreateAccountStep2Screen> {
     }
   }
 
+  void _onChildrenCountChanged(String value) {
+    final count = int.tryParse(value.trim()) ?? 0;
+    final clamped = count.clamp(0, 10);
+    setState(() {
+      // Dispose extras
+      for (int i = clamped; i < _ageControllers.length; i++) {
+        _ageControllers[i].dispose();
+      }
+      if (clamped > _ageControllers.length) {
+        // Add new controllers
+        _ageControllers.addAll(
+          List.generate(clamped - _ageControllers.length, (_) => TextEditingController()),
+        );
+      } else {
+        _ageControllers = _ageControllers.sublist(0, clamped);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _addressController.dispose();
     _cityController.dispose();
     _zipController.dispose();
     _childrenCountController.dispose();
-    _childrenAgesController.dispose();
+    for (final c in _ageControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -171,11 +193,46 @@ class _CreateAccountStep2ScreenState extends State<CreateAccountStep2Screen> {
                     controller: _childrenCountController,
                     hint: '2',
                     keyboardType: TextInputType.number,
+                    onChanged: _onChildrenCountChanged,
                   ),
-                  const SizedBox(height: 16),
-                  _buildLabel('Ages of Children'),
-                  const SizedBox(height: 8),
-                  _buildTextField(controller: _childrenAgesController, hint: 'e.g 3,5,8'),
+                  // Dynamic per-child age fields — two per row
+                  if (_ageControllers.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _buildLabel('Ages of Children'),
+                    const SizedBox(height: 8),
+                    ...List.generate(
+                      (_ageControllers.length / 2).ceil(),
+                      (rowIndex) {
+                        final leftIndex = rowIndex * 2;
+                        final rightIndex = leftIndex + 1;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildTextField(
+                                  controller: _ageControllers[leftIndex],
+                                  hint: 'Child ${leftIndex + 1} age',
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                              if (rightIndex < _ageControllers.length) ...[
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: _ageControllers[rightIndex],
+                                    hint: 'Child ${rightIndex + 1} age',
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                ),
+                              ] else
+                                const Expanded(child: SizedBox()),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 28),
                   PrimaryButton(
                     label: _saving ? 'Saving…' : 'Continue',
@@ -193,7 +250,7 @@ class _CreateAccountStep2ScreenState extends State<CreateAccountStep2Screen> {
                             }
                             final rows = ProfileRepository.parseOnboardingChildrenRecords(
                               countStr: _childrenCountController.text,
-                              agesStr: _childrenAgesController.text,
+                              agesStr: _ageControllers.map((c) => c.text.trim()).join(','),
                             );
                             if (rows.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -205,12 +262,17 @@ class _CreateAccountStep2ScreenState extends State<CreateAccountStep2Screen> {
                             setState(() => _saving = true);
                             try {
                               final repo = ProfileRepository(Supabase.instance.client);
+                              // Geocode the address so "Use My Home Address" works in job posting
+                              final fullAddr = '$addr, $city, $zip';
+                              final coords = await JobPostSession.geocodeAddress(fullAddr);
                               await repo.updateFamily(
                                 homeAddress: {
                                   'line1': addr,
                                   'city': city,
                                   'postal_code': zip,
                                 },
+                                homeLat: coords.$1 != 0.0 ? coords.$1 : null,
+                                homeLng: coords.$2 != 0.0 ? coords.$2 : null,
                               );
                               await repo.replaceFamilyChildren(rows);
                               if (!mounted) return;
@@ -246,10 +308,12 @@ class _CreateAccountStep2ScreenState extends State<CreateAccountStep2Screen> {
     required TextEditingController controller,
     required String hint,
     TextInputType keyboardType = TextInputType.text,
+    ValueChanged<String>? onChanged,
   }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,

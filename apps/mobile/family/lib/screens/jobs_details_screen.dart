@@ -163,8 +163,8 @@ class _JobsDetailsScreenState extends State<JobsDetailsScreen> {
   }
 
   Future<void> _openChat() async {
-    final convId = await ConversationsRepository(Supabase.instance.client)
-        .conversationIdForJob(widget.jobId);
+    final repo = ConversationsRepository(Supabase.instance.client);
+    final convId = await repo.conversationIdForJob(widget.jobId);
     if (!mounted) return;
     if (convId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -172,12 +172,20 @@ class _JobsDetailsScreenState extends State<JobsDetailsScreen> {
       );
       return;
     }
+
+    // Fetch sitter profile for the chat header
+    final profile = await repo.fetchPartnerProfile(convId);
     if (!mounted) return;
+
+    final name = profile?['full_name']?.toString() ?? 'Sitter chat';
+    final avatar = profile?['avatar_url']?.toString();
+
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => SitterChatScreen(
           conversationId: convId,
-          chatTitle: 'Sitter chat',
+          chatTitle: name,
+          avatarUrl: avatar,
         ),
       ),
     );

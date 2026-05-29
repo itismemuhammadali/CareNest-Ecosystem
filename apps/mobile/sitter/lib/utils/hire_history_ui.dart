@@ -9,6 +9,10 @@ class HireHistoryUi {
         : <String, dynamic>{};
 
     final title = (job['title'] ?? 'Completed shift').toString();
+    
+    final familyUser = job['users'] as Map?;
+    final familyName = familyUser?['full_name']?.toString() ?? title;
+
     final dateStr = job['date']?.toString() ?? '';
     DateTime? day;
     if (dateStr.length >= 10) {
@@ -41,7 +45,7 @@ class HireHistoryUi {
     final status = (job['status'] ?? 'completed').toString();
 
     return <String, dynamic>{
-      'family': title,
+      'family': familyName,
       'date': dateDisplay,
       'hours': hours.toStringAsFixed(1),
       'rate': rateStr,

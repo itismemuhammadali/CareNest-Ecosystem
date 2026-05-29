@@ -114,7 +114,10 @@ class _CreateAccountStep3ScreenState extends State<CreateAccountStep3Screen> {
     setState(() => _uploadingSelfie = true);
     try {
       final repo = ProfileRepository(Supabase.instance.client);
+      // Upload to bg-check-docs for verification
       final path = await repo.uploadFamilyBgCheckBytes(bytes, f.name);
+      // Also set as profile picture — same image, no separate upload needed
+      await repo.uploadAvatar(bytes, f.name);
       if (!mounted) return;
       setState(() {
         _selfiePath = path;

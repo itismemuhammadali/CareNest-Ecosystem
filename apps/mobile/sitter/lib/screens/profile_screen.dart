@@ -51,7 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => Padding(
+      builder: (modalContext) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -82,7 +82,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Divider(color: Colors.white.withValues(alpha: 0.1), thickness: 1),
             const SizedBox(height: 16),
             GestureDetector(
-              onTap: () {
+              onTap: () async {
+                // Close modal using modal context
+                Navigator.pop(modalContext);
+                
+                // Sign out
+                await Supabase.instance.client.auth.signOut();
+                
+                // Navigate using parent context
+                if (!context.mounted) return;
                 Navigator.of(context).pushAndRemoveUntil(
                   CustomPageRoute(builder: (_) => const SignInScreen()),
                   (route) => false,
@@ -108,7 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: () => Navigator.pop(context),
+              onTap: () => Navigator.pop(modalContext),
               child: Container(
                 width: double.infinity,
                 height: 54,

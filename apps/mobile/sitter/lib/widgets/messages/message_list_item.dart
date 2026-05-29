@@ -7,6 +7,7 @@ class MessageListItem extends StatelessWidget {
   final String time;
   final bool isUnread;
   final String? avatarAsset;
+  final String? avatarUrl;
   final VoidCallback? onTap;
 
   const MessageListItem({
@@ -16,6 +17,7 @@ class MessageListItem extends StatelessWidget {
     required this.time,
     this.isUnread = false,
     this.avatarAsset,
+    this.avatarUrl,
     this.onTap,
   });
 
@@ -36,10 +38,10 @@ class MessageListItem extends StatelessWidget {
             CircleAvatar(
               radius: 26,
               backgroundColor: const Color(0xFF2A2D3E),
-              backgroundImage: avatarAsset != null
-                  ? AssetImage(avatarAsset!)
-                  : null,
-              child: avatarAsset == null
+              backgroundImage: avatarUrl != null
+                  ? NetworkImage(avatarUrl!)
+                  : (avatarAsset != null ? AssetImage(avatarAsset!) : null) as ImageProvider?,
+              child: (avatarUrl == null && avatarAsset == null)
                   ? SvgPicture.asset(
                       'assets/profile-icon.svg',
                       width: 26,

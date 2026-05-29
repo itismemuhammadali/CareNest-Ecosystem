@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:star_sitters_core/star_sitters_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomeHeader extends StatefulWidget {
@@ -26,27 +25,32 @@ class _HomeHeaderState extends State<HomeHeader> {
   String? _avatarUrl;
   int _unreadCount = 0;
   StreamSubscription<List<Map<String, dynamic>>>? _notifSub;
+  StreamSubscription<List<Map<String, dynamic>>>? _profileSub;
 
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    _subscribeProfile();
     _subscribeNotifications();
   }
 
-  Future<void> _loadProfile() async {
-    try {
-      final repo = ProfileRepository(Supabase.instance.client);
-      final user = await repo.currentUserRow();
-      final fullName = user?['full_name']?.toString() ?? '';
+  void _subscribeProfile() {
+    final uid = Supabase.instance.client.auth.currentUser?.id;
+    if (uid == null) return;
+    _profileSub = Supabase.instance.client
+        .from('users')
+        .stream(primaryKey: ['id'])
+        .eq('id', uid)
+        .listen((rows) {
+      if (!mounted || rows.isEmpty) return;
+      final user = rows.first;
+      final fullName = user['full_name']?.toString() ?? '';
       final first = fullName.trim().split(' ').first;
-      if (mounted) {
-        setState(() {
-          _displayName = first;
-          _avatarUrl = user?['avatar_url'] as String?;
-        });
-      }
-    } catch (_) {}
+      setState(() {
+        _displayName = first;
+        _avatarUrl = user['avatar_url'] as String?;
+      });
+    });
   }
 
   void _subscribeNotifications() {
@@ -65,6 +69,7 @@ class _HomeHeaderState extends State<HomeHeader> {
 
   @override
   void dispose() {
+    _profileSub?.cancel();
     _notifSub?.cancel();
     super.dispose();
   }
@@ -96,15 +101,46 @@ class _HomeHeaderState extends State<HomeHeader> {
                 children: [
                   Row(
                     children: [
-                      GestureDetector(
-                        onTap: widget.onProfileTap,
-                        child: CircleAvatar(
-                          radius: 24,
-                          backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
-                              ? NetworkImage(_avatarUrl!) as ImageProvider
-                              : const AssetImage('assets/profilePicture.png'),
-                        ),
-                      ),
+                      // Avatar with proper image loading
+                      _avatarUrl != null && _avatarUrl!.isNotEmpty
+                          ? ClipOval(
+                              child: Image.network(
+                                _avatarUrl!,
+                                width: 48,
+                                height: 48,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white12,
+                                    ),
+                                    child: SvgPicture.asset(
+                                      'assets/profile-icon.svg',
+                                      width: 24,
+                                      height: 24,
+                                      colorFilter: const ColorFilter.mode(Colors.white54, BlendMode.srcIn),
+                                    ),
+                                  );
+                                },
+                              ),
+                            )
+                          : Container(
+                              width: 48,
+                              height: 48,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white12,
+                              ),
+                              child: SvgPicture.asset(
+                                'assets/profile-icon.svg',
+                                width: 24,
+                                height: 24,
+                                colorFilter: const ColorFilter.mode(Colors.white54, BlendMode.srcIn),
+                              ),
+                            ),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

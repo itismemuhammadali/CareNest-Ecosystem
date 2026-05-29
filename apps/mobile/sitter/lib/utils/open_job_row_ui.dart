@@ -70,9 +70,12 @@ class OpenJobRowUi {
     final childrenLabel = noc == 1 ? '1 child' : '$noc children';
     final tags = <String>[childrenLabel, 'Open'];
 
+    final user = row['users'];
+    final familyName = (user is Map) ? (user['full_name']?.toString() ?? 'Verified family') : 'Verified family';
+
     return OpenJobRowUi(
       jobId: id,
-      familyName: 'Verified family',
+      familyName: familyName,
       location: location,
       dateDisplay: dateDisplay,
       hoursDisplay: hoursDisplay,

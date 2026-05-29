@@ -10,40 +10,6 @@ class ProfileUnderReviewScreen extends StatefulWidget {
 }
 
 class _ProfileUnderReviewScreenState extends State<ProfileUnderReviewScreen> {
-  late int _secondsRemaining;
-
-  @override
-  void initState() {
-    super.initState();
-    _secondsRemaining = 5;
-    _startCountdown();
-  }
-
-  void _startCountdown() {
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() {
-          _secondsRemaining--;
-        });
-        if (_secondsRemaining > 0) {
-          _startCountdown();
-        } else {
-          // Sign out and redirect to login
-          _signOutAndRedirect();
-        }
-      }
-    });
-  }
-
-  Future<void> _signOutAndRedirect() async {
-    try {
-      await Supabase.instance.client.auth.signOut();
-      // Don't navigate - let AuthGate handle the rebuild
-    } catch (e) {
-      debugPrint('Sign out error: $e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -133,12 +99,22 @@ class _ProfileUnderReviewScreenState extends State<ProfileUnderReviewScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    'Auto-closing in $_secondsRemaining seconds...',
-                    style: const TextStyle(
+                  const CircularProgressIndicator(color: Color(0xFFA8D8EA)),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Waiting for approval...',
+                    style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFFA8D8EA),
                       fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  TextButton(
+                    onPressed: () => Supabase.instance.client.auth.signOut(),
+                    child: const Text(
+                      'Sign Out',
+                      style: TextStyle(color: Colors.white70),
                     ),
                   ),
                 ],

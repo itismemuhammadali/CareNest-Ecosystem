@@ -8,12 +8,15 @@ class SitterChatScreen extends StatefulWidget {
   final String? conversationId;
   final String chatTitle;
   final String? avatarUrl;
+  /// Job information to display in the header
+  final String jobInfo;
 
   const SitterChatScreen({
     super.key,
     this.conversationId,
     this.chatTitle = 'Chat',
     this.avatarUrl,
+    this.jobInfo = '',
   });
 
   @override
@@ -190,7 +193,15 @@ class _SitterChatScreenState extends State<SitterChatScreen> {
                     ? NetworkImage(widget.avatarUrl!) as ImageProvider
                     : null,
                 child: (widget.avatarUrl == null || widget.avatarUrl!.isEmpty)
-                    ? const Icon(Icons.person, color: Colors.white38, size: 28)
+                    ? SvgPicture.asset(
+                        'assets/profile-icon.svg',
+                        width: 32,
+                        height: 32,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white38,
+                          BlendMode.srcIn,
+                        ),
+                      )
                     : null,
               ),
               const SizedBox(width: 14),
@@ -208,11 +219,13 @@ class _SitterChatScreenState extends State<SitterChatScreen> {
                       ),
                     ),
                     const SizedBox(height: 3),
-                    const Text(
-                      'Secure chat',
+                    Text(
+                      widget.jobInfo.isNotEmpty ? widget.jobInfo : 'Secure chat',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF10B981),
+                        color: widget.jobInfo.isNotEmpty ? const Color(0xFFA8D8EA) : const Color(0xFF10B981),
                         fontWeight: FontWeight.w500,
                       ),
                     ),

@@ -26,7 +26,8 @@ class JobsRepository {
         .from('jobs')
         .select(
           'id, title, description, date, start_time, end_time, '
-          'number_of_children, location_address, status, family_id, created_at',
+          'number_of_children, location_address, status, family_id, created_at, '
+          'family_profiles!inner(user_id, users!inner(full_name, avatar_url))',
         )
         .eq('status', 'open')
         .order('created_at', ascending: false)
@@ -130,7 +131,8 @@ class JobsRepository {
         .select(
           'id, job_id, sitter_id, hourly_rate, hired_at, '
           'jobs(id, title, description, date, start_time, end_time, status, '
-          'number_of_children, location_address, family_id)',
+          'number_of_children, location_address, family_id, '
+          'family_profiles!inner(user_id, users!inner(full_name, avatar_url)))',
         )
         .eq('sitter_id', uid)
         .order('hired_at', ascending: false);

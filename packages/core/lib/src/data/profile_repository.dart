@@ -301,7 +301,10 @@ class ProfileRepository {
           bytes,
           fileOptions: FileOptions(upsert: true, contentType: 'image/$ext'),
         );
-    final url = _client.storage.from('avatars').getPublicUrl(path);
+    final baseUrl = _client.storage.from('avatars').getPublicUrl(path);
+    // Append a cache-busting timestamp so Flutter's NetworkImage always
+    // fetches the latest image instead of serving a stale cached version.
+    final url = '$baseUrl?t=${DateTime.now().millisecondsSinceEpoch}';
     await _client.from('users').update({'avatar_url': url}).eq('id', uid);
     return url;
   }

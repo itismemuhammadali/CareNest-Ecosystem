@@ -79,7 +79,8 @@ class ApplicationsRepository {
         .select(
           'id, job_id, sitter_id, status, applied_at, cover_message, '
           'jobs(id, title, description, date, start_time, end_time, status, '
-          'number_of_children, location_address, family_id)',
+          'number_of_children, location_address, family_id, '
+          'family_profiles!inner(user_id, users!inner(full_name, avatar_url)))',
         )
         .eq('sitter_id', uid)
         .order('applied_at', ascending: false);
@@ -100,7 +101,7 @@ class ApplicationsRepository {
         .eq('sitter_id', uid);
   }
 
-  /// One-shot list with `sitter_user` map (`full_name`, `email`) per row.
+  /// One-shot list with `sitter_user` map (`full_name`, `email`, `avatar_url`) per row.
   Future<List<Map<String, dynamic>>> applicationsWithSitterUsers(
     String jobId,
   ) async {
@@ -115,7 +116,7 @@ class ApplicationsRepository {
     if (list.isEmpty) return list;
     final ids = list.map((e) => e['sitter_id'].toString()).toSet().toList();
     final usersRes =
-        await _client.from('users').select('id, full_name, email').filter('id', 'in', '(${ids.join(',')})');
+        await _client.from('users').select('id, full_name, email, avatar_url').filter('id', 'in', '(${ids.join(',')})');
     final users = List<Map<String, dynamic>>.from(
       (usersRes as List).map((e) => Map<String, dynamic>.from(e as Map)),
     );

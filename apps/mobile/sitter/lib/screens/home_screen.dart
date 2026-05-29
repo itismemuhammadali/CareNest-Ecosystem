@@ -139,7 +139,7 @@ class _HomeTabState extends State<_HomeTab> {
         ? Future.value(const <Map<String, dynamic>>[])
         : client
             .from('applications')
-            .select('id, status, job_id, applied_at, jobs(title, location_address, date)')
+            .select('id, status, job_id, applied_at, jobs(title, location_address, date, family_profiles!inner(user_id, users!inner(full_name, avatar_url)))')
             .eq('sitter_id', uid)
             .order('applied_at', ascending: false)
             .then(
@@ -238,11 +238,14 @@ class _HomeTabState extends State<_HomeTab> {
                         if (location.isEmpty) location = 'See Browse for details';
                         final jobDate = job?['date']?.toString() ??
                             a['applied_at']?.toString().substring(0, 10) ?? '';
+                        final familyUser = job?['users'] as Map?;
+                        final familyName = familyUser?['full_name']?.toString() ?? 'Family';
+                        
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: JobCard(
                             title: title,
-                            family: '',
+                            family: familyName,
                             date: jobDate.length >= 10 ? jobDate.substring(0, 10) : jobDate,
                             time: st,
                             status: st,

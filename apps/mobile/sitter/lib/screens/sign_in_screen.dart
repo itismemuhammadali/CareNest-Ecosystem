@@ -1,12 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:star_sitters_core/star_sitters_core.dart';
 
 import '../widgets/primary_button.dart';
 import '../utils/navigation_transitions.dart';
 import 'forgot_password_screen.dart';
 import 'create_account_screen.dart';
-import '../widgets/auth_gate.dart';
+import 'home_screen.dart';
 
 const _kMobileRedirect = 'io.supabase.starsittersitter://login-callback';
 const _kWebRedirect = 'http://localhost:8083';
@@ -41,8 +42,25 @@ class _SignInScreenState extends State<SignInScreen> {
       );
       if (!mounted) return;
       if (res.session != null) {
+        // Pre-load user data before navigating
+        try {
+          final client = Supabase.instance.client;
+          final uid = client.auth.currentUser?.id;
+          if (uid != null) {
+            final profileRepo = ProfileRepository(client);
+            // Load user profile
+            await profileRepo.currentUserRow();
+            // Load sitter profile
+            await profileRepo.watchSitterProfileRow().first;
+          }
+        } catch (e) {
+          debugPrint('Pre-load error: $e');
+          // Continue anyway - HomeScreen will handle loading
+        }
+        
+        if (!mounted) return;
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const AuthGate()),
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
           (_) => false,
         );
       }
@@ -67,6 +85,18 @@ class _SignInScreenState extends State<SignInScreen> {
         OAuthProvider.google,
         redirectTo: _oauthRedirect,
       );
+      // Pre-load user data after OAuth
+      try {
+        final client = Supabase.instance.client;
+        final uid = client.auth.currentUser?.id;
+        if (uid != null) {
+          final profileRepo = ProfileRepository(client);
+          await profileRepo.currentUserRow();
+          await profileRepo.watchSitterProfileRow().first;
+        }
+      } catch (e) {
+        debugPrint('Pre-load error: $e');
+      }
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
@@ -74,6 +104,72 @@ class _SignInScreenState extends State<SignInScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Google sign-in: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _appleOAuth() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await Supabase.instance.client.auth.signInWithOAuth(
+        OAuthProvider.apple,
+        redirectTo: _oauthRedirect,
+      );
+      // Pre-load user data after OAuth
+      try {
+        final client = Supabase.instance.client;
+        final uid = client.auth.currentUser?.id;
+        if (uid != null) {
+          final profileRepo = ProfileRepository(client);
+          await profileRepo.currentUserRow();
+          await profileRepo.watchSitterProfileRow().first;
+        }
+      } catch (e) {
+        debugPrint('Pre-load error: $e');
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Apple sign-in: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _facebookOAuth() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await Supabase.instance.client.auth.signInWithOAuth(
+        OAuthProvider.facebook,
+        redirectTo: _oauthRedirect,
+      );
+      // Pre-load user data after OAuth
+      try {
+        final client = Supabase.instance.client;
+        final uid = client.auth.currentUser?.id;
+        if (uid != null) {
+          final profileRepo = ProfileRepository(client);
+          await profileRepo.currentUserRow();
+          await profileRepo.watchSitterProfileRow().first;
+        }
+      } catch (e) {
+        debugPrint('Pre-load error: $e');
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Facebook sign-in: $e')),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -166,8 +262,9 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                         const SizedBox(height: 24),
                         PrimaryButton(
-                          label: _busy ? 'Signing in…' : 'Sign In',
+                          label: 'Sign In',
                           onPressed: _busy ? () {} : _signIn,
+                          isLoading: _busy,
                         ),
                         const SizedBox(height: 28),
                         Row(
@@ -186,43 +283,9 @@ class _SignInScreenState extends State<SignInScreen> {
                         const SizedBox(height: 20),
                         _buildSocialButton('Continue with Google', _googleOAuth),
                         const SizedBox(height: 14),
-                        _buildSocialButton('Continue with Apple', () async {
-                          if (_busy) return;
-                          setState(() => _busy = true);
-                          try {
-                            await Supabase.instance.client.auth.signInWithOAuth(
-                              OAuthProvider.apple,
-                              redirectTo: _oauthRedirect,
-                            );
-                          } on AuthException catch (e) {
-                            if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
-                          } catch (e) {
-                            if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Apple sign-in: $e')));
-                          } finally {
-                            if (mounted) setState(() => _busy = false);
-                          }
-                        }),
+                        _buildSocialButton('Continue with Apple', _appleOAuth),
                         const SizedBox(height: 14),
-                        _buildSocialButton('Continue with Facebook', () async {
-                          if (_busy) return;
-                          setState(() => _busy = true);
-                          try {
-                            await Supabase.instance.client.auth.signInWithOAuth(
-                              OAuthProvider.facebook,
-                              redirectTo: _oauthRedirect,
-                            );
-                          } on AuthException catch (e) {
-                            if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
-                          } catch (e) {
-                            if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Facebook sign-in: $e')));
-                          } finally {
-                            if (mounted) setState(() => _busy = false);
-                          }
-                        }),
+                        _buildSocialButton('Continue with Facebook', _facebookOAuth),
                       ],
                     ),
                   ),

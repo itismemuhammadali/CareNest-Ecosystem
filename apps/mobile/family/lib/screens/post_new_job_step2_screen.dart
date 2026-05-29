@@ -59,8 +59,17 @@ class _PostNewJobStep2ScreenState extends State<PostNewJobStep2Screen> {
     try {
       final profile = await ProfileRepository(Supabase.instance.client).familyProfile();
       if (!mounted) return;
-      final lat = (profile?['home_lat'] as num?)?.toDouble();
-      final lng = (profile?['home_lng'] as num?)?.toDouble();
+      var lat = (profile?['home_lat'] as num?)?.toDouble();
+      var lng = (profile?['home_lng'] as num?)?.toDouble();
+      // If coords missing, geocode the saved text address
+      if ((lat == null || lng == null || (lat == 0.0 && lng == 0.0))) {
+        final addr = _formatHomeAddress(profile?['home_address']);
+        if (addr != 'Home address') {
+          final coords = await JobPostSession.geocodeAddress(addr);
+          lat = coords.$1;
+          lng = coords.$2;
+        }
+      }
       if (lat == null || lng == null || (lat == 0.0 && lng == 0.0)) return;
       _applyPin(_formatHomeAddress(profile?['home_address']), lat, lng);
     } catch (_) {
@@ -75,15 +84,42 @@ class _PostNewJobStep2ScreenState extends State<PostNewJobStep2Screen> {
     try {
       final profile = await ProfileRepository(Supabase.instance.client).familyProfile();
       if (!mounted) return;
-      final lat = (profile?['home_lat'] as num?)?.toDouble();
-      final lng = (profile?['home_lng'] as num?)?.toDouble();
+      var lat = (profile?['home_lat'] as num?)?.toDouble();
+      var lng = (profile?['home_lng'] as num?)?.toDouble();
+      final addrText = _formatHomeAddress(profile?['home_address']);
+
+      // If no coords stored, try geocoding the saved text address
       if (lat == null || lng == null || (lat == 0.0 && lng == 0.0)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No home address saved in your profile yet.')),
-        );
-        return;
+        if (addrText == 'Home address') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No home address saved in your profile yet.')),
+          );
+          return;
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Locating your home address…')),
+          );
+        }
+        final coords = await JobPostSession.geocodeAddress(addrText);
+        lat = coords.$1;
+        lng = coords.$2;
+        if (lat == 0.0 && lng == 0.0) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Could not locate that address. Try searching manually.')),
+            );
+          }
+          return;
+        }
+        // Save coords back to profile so next time is instant
+        try {
+          await ProfileRepository(Supabase.instance.client)
+              .updateFamily(homeLat: lat, homeLng: lng);
+        } catch (_) {}
       }
-      _applyPin(_formatHomeAddress(profile?['home_address']), lat, lng);
+      if (!mounted) return;
+      _applyPin(addrText, lat, lng);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

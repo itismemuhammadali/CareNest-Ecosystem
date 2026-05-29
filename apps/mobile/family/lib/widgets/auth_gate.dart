@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -21,17 +20,7 @@ class AuthGate extends StatefulWidget {
 class _AuthGateState extends State<AuthGate> {
   Session? _session;
   late final Stream<AuthState> _authStream;
-  Timer? _idleTimer;
-  static const _idleTimeout = Duration(minutes: 15);
   Future<Map<String, dynamic>?>? _userRowFuture;
-
-  void _resetIdleTimer() {
-    _idleTimer?.cancel();
-    if (Supabase.instance.client.auth.currentSession == null) return;
-    _idleTimer = Timer(_idleTimeout, () {
-      Supabase.instance.client.auth.signOut();
-    });
-  }
 
   @override
   void initState() {
@@ -43,13 +32,9 @@ class _AuthGateState extends State<AuthGate> {
       if (state.session != null) {
         Future.microtask(_tryRegisterFcm);
         Future.microtask(systemConfig.load);
-        _resetIdleTimer();
-      } else {
-        _idleTimer?.cancel();
       }
     });
     if (_session != null) {
-      _resetIdleTimer();
       Future.microtask(systemConfig.load);
     }
     _refreshUserRow();
@@ -63,7 +48,6 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   void dispose() {
-    _idleTimer?.cancel();
     super.dispose();
   }
 
@@ -94,10 +78,7 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      behavior: HitTestBehavior.translucent,
-      onPointerDown: (_) => _resetIdleTimer(),
-      child: StreamBuilder<AuthState>(
+    return StreamBuilder<AuthState>(
       stream: _authStream,
       builder: (context, snapshot) {
         final session = snapshot.hasData ? snapshot.data!.session : _session;
@@ -168,7 +149,6 @@ class _AuthGateState extends State<AuthGate> {
           },
         );
       },
-    ),
     );
   }
 }

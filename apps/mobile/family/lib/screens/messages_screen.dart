@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:star_sitters_core/star_sitters_core.dart';
 import 'package:star_sitter_family/widgets/bottom_nav_bar.dart';
@@ -123,16 +124,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                 conversationId: id,
                                 jobId: jobId,
                                 time: time,
-                                onOpen: id.isEmpty
-                                    ? null
-                                    : () => Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) => SitterChatScreen(
-                                              conversationId: id,
-                                              chatTitle: 'Sitter chat',
-                                            ),
-                                          ),
-                                        ),
                               );
                             }).toList(),
                           );
@@ -179,113 +170,18 @@ class _MessagesScreenState extends State<MessagesScreen> {
             ),
     );
   }
-
-  Widget _buildChatCard({
-    required String name,
-    required String message,
-    required String time,
-    required int unreadCount,
-    required String imagePath,
-    VoidCallback? onOpen,
-  }) {
-    return GestureDetector(
-      onTap: onOpen,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0x991E293B),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundImage: AssetImage(imagePath),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    message,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white70,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  time,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.white54,
-                  ),
-                ),
-                if (unreadCount > 0) ...[
-                  const SizedBox(height: 4),
-                  Container(
-                    width: 20,
-                    height: 20,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFA8D8EA),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        unreadCount.toString(),
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF0F172A),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _ConversationTile extends StatefulWidget {
   final String conversationId;
   final String jobId;
   final String time;
-  final VoidCallback? onOpen;
 
   const _ConversationTile({
     super.key,
     required this.conversationId,
     required this.jobId,
     required this.time,
-    this.onOpen,
   });
 
   @override
@@ -294,31 +190,89 @@ class _ConversationTile extends StatefulWidget {
 
 class _ConversationTileState extends State<_ConversationTile> {
   String _title = 'Loading…';
+  String _jobInfo = '';
+  String? _avatarUrl;
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadTitle();
+    _loadData();
   }
 
-  Future<void> _loadTitle() async {
-    if (widget.jobId.isEmpty) {
-      if (mounted) setState(() => _title = 'Conversation');
+  Future<void> _loadData() async {
+    if (widget.conversationId.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _title = 'Conversation';
+          _loading = false;
+        });
+      }
       return;
     }
-    final row = await ConversationsRepository(Supabase.instance.client)
-        .fetchJobTitle(widget.jobId);
+    
+    final repo = ConversationsRepository(Supabase.instance.client);
+    final results = await Future.wait([
+      repo.fetchPartnerProfile(widget.conversationId),
+      repo.fetchJobDetails(widget.conversationId),
+    ]);
+    
     if (mounted) {
-      setState(() => _title = row?['title']?.toString() ?? 'Job chat');
+      setState(() {
+        final profile = results[0] as Map<String, dynamic>?;
+        if (profile != null) {
+          _title = profile['full_name']?.toString() ?? 'Sitter';
+          _avatarUrl = profile['avatar_url']?.toString();
+        } else {
+          _title = 'Sitter';
+        }
+        
+        final jobDetails = results[1] as Map<String, dynamic>?;
+        if (jobDetails != null) {
+          final title = jobDetails['title']?.toString() ?? '';
+          final date = jobDetails['date']?.toString() ?? '';
+          final startTime = jobDetails['start_time']?.toString() ?? '';
+          final numChildren = jobDetails['number_of_children']?.toString() ?? '';
+          
+          // Format job info: "Job Title • Date • Time • X kids"
+          final parts = <String>[];
+          if (title.isNotEmpty) parts.add(title);
+          if (date.isNotEmpty) parts.add(date);
+          if (startTime.isNotEmpty) parts.add(startTime);
+          if (numChildren.isNotEmpty) parts.add('$numChildren kids');
+          
+          _jobInfo = parts.join(' • ');
+        }
+        
+        _loading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const SizedBox(
+        height: 80,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: GestureDetector(
-        onTap: widget.onOpen,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => SitterChatScreen(
+                conversationId: widget.conversationId,
+                chatTitle: _title,
+                avatarUrl: _avatarUrl,
+                jobInfo: _jobInfo,
+              ),
+            ),
+          );
+        },
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
@@ -329,7 +283,24 @@ class _ConversationTileState extends State<_ConversationTile> {
           ),
           child: Row(
             children: [
-              const CircleAvatar(radius: 24, backgroundImage: AssetImage('assets/homeScreenPic1.png')),
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: const Color(0xFF1E293B),
+                backgroundImage: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+                    ? NetworkImage(_avatarUrl!) as ImageProvider
+                    : null,
+                child: (_avatarUrl == null || _avatarUrl!.isEmpty)
+                    ? SvgPicture.asset(
+                        'assets/profile-icon.svg',
+                        width: 24,
+                        height: 24,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white38,
+                          BlendMode.srcIn,
+                        ),
+                      )
+                    : null,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -337,7 +308,12 @@ class _ConversationTileState extends State<_ConversationTile> {
                   children: [
                     Text(_title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
                     const SizedBox(height: 4),
-                    const Text('Tap to open chat', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                    Text(
+                      _jobInfo.isNotEmpty ? _jobInfo : 'Tap to open chat',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, color: Colors.white70),
+                    ),
                   ],
                 ),
               ),

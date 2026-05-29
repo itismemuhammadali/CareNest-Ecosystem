@@ -80,38 +80,18 @@ class MessagesTab extends StatelessWidget {
                     return Column(
                       children: rows.map((c) {
                         final id = c['id']?.toString() ?? '';
-                        final jobId = c['job_id']?.toString() ?? '';
                         final created = c['created_at'] != null
                             ? DateTime.tryParse(c['created_at'].toString())
                             : null;
                         final time = created != null
                             ? DateFormat.yMMMd().add_jm().format(created.toLocal())
                             : '';
-                        // S9: Check real unread count per conversation
+                        
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 10),
-                          child: FutureBuilder<int>(
-                            future: id.isEmpty
-                                ? Future.value(0)
-                                : ConversationsRepository(Supabase.instance.client)
-                                    .unreadCountForConversation(id),
-                            builder: (ctx, unreadSnap) => MessageListItem(
-                              name: 'Family · job ${jobId.length > 6 ? jobId.substring(0, 6) : jobId}…',
-                              preview: 'Tap to view conversation',
-                              time: time,
-                              isUnread: (unreadSnap.data ?? 0) > 0,
-                              onTap: id.isEmpty
-                                  ? null
-                                  : () => Navigator.push(
-                                        context,
-                                        CustomPageRoute(
-                                          builder: (_) => ChatScreen(
-                                            familyName: 'Family',
-                                            conversationId: id,
-                                          ),
-                                        ),
-                                      ),
-                            ),
+                          child: _SitterConversationItem(
+                            conversationId: id,
+                            time: time,
                           ),
                         );
                       }).toList(),
@@ -124,6 +104,103 @@ class MessagesTab extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SitterConversationItem extends StatefulWidget {
+  final String conversationId;
+  final String time;
+
+  const _SitterConversationItem({
+    required this.conversationId,
+    required this.time,
+  });
+
+  @override
+  State<_SitterConversationItem> createState() => _SitterConversationItemState();
+}
+
+class _SitterConversationItemState extends State<_SitterConversationItem> {
+  String _partnerName = 'Family';
+  String? _avatarUrl;
+  String _jobInfo = '';
+  int _unreadCount = 0;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    if (widget.conversationId.isEmpty) return;
+    final repo = ConversationsRepository(Supabase.instance.client);
+    
+    final results = await Future.wait([
+      repo.fetchPartnerProfile(widget.conversationId),
+      repo.unreadCountForConversation(widget.conversationId),
+      repo.fetchJobDetails(widget.conversationId),
+    ]);
+
+    if (mounted) {
+      setState(() {
+        final profile = results[0] as Map<String, dynamic>?;
+        if (profile != null) {
+          _partnerName = profile['full_name']?.toString() ?? 'Family';
+          _avatarUrl = profile['avatar_url']?.toString();
+        }
+        _unreadCount = results[1] as int;
+        
+        final jobDetails = results[2] as Map<String, dynamic>?;
+        if (jobDetails != null) {
+          final title = jobDetails['title']?.toString() ?? '';
+          final date = jobDetails['date']?.toString() ?? '';
+          final startTime = jobDetails['start_time']?.toString() ?? '';
+          final numChildren = jobDetails['number_of_children']?.toString() ?? '';
+          
+          // Format job info: "Job Title • Date • Time • X kids"
+          final parts = <String>[];
+          if (title.isNotEmpty) parts.add(title);
+          if (date.isNotEmpty) parts.add(date);
+          if (startTime.isNotEmpty) parts.add(startTime);
+          if (numChildren.isNotEmpty) parts.add('$numChildren kids');
+          
+          _jobInfo = parts.join(' • ');
+        }
+        
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const SizedBox(
+        height: 80,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+
+    return MessageListItem(
+      name: _partnerName,
+      preview: _jobInfo.isNotEmpty ? _jobInfo : 'Tap to view conversation',
+      time: widget.time,
+      isUnread: _unreadCount > 0,
+      avatarUrl: _avatarUrl,
+      onTap: () => Navigator.push(
+        context,
+        CustomPageRoute(
+          builder: (_) => ChatScreen(
+            familyName: _partnerName,
+            conversationId: widget.conversationId,
+            avatarUrl: _avatarUrl,
+            jobInfo: _jobInfo,
+          ),
+        ),
+      ),
     );
   }
 }
