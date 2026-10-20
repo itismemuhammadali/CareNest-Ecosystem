@@ -1,6 +1,12 @@
 <div align="center">
 
-<img src="./assets/branding/logo.png" alt="CareNest Logo" width="140" style="border-radius: 24px; box-shadow: 0 8px 32px rgba(16, 185, 129, 0.35);" />
+<p align="center">
+  <img src="assets/branding/client_trademark_logo.png" alt="Star Sitter Production Logo" width="140" style="border-radius: 20px; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25); margin: 0 12px;" />
+  <img src="assets/branding/carenest_platform_logo.jpg" alt="CareNest Platform Architectural Emblem" width="140" style="border-radius: 20px; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25); margin: 0 12px;" />
+</p>
+<p align="center">
+  <em>Left: Production Client Mark (Star Sitter) &bull; Right: Architectural Platform Identity (CareNest)</em>
+</p>
 
 # CareNest Ecosystem
 
